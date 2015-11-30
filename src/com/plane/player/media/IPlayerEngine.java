@@ -2,13 +2,17 @@ package com.plane.player.media;
 
 import java.util.List;
 
-import com.plane.player.media.PlayerEngineImpl.PlaybackMode;
-
+import android.media.MediaPlayer.OnBufferingUpdateListener;
 import android.media.MediaPlayer.OnCompletionListener;
+import android.media.MediaPlayer.OnPreparedListener;
+
+import com.plane.player.media.PlayerEngineImpl.PlaybackMode;
 
 public interface IPlayerEngine {
 
 	void play();
+
+	void playAsync();
 
 	void reset();
 
@@ -39,6 +43,11 @@ public interface IPlayerEngine {
 	void start();
 
 	void setOnCompletionListener(OnCompletionListener onCompletionListener);
+
+	void setOnPreparedListener(OnPreparedListener OnPreparedListener);
+
+	void setOnBufferingUpdateListener(
+			OnBufferingUpdateListener OnBufferingUpdateListener);
 
 	void setPlaybackMode(PlaybackMode playbackMode);
 

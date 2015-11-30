@@ -10,7 +10,9 @@ import java.util.Locale;
 import com.plane.player.BelmotPlayer;
 
 import android.media.MediaPlayer;
+import android.media.MediaPlayer.OnBufferingUpdateListener;
 import android.media.MediaPlayer.OnCompletionListener;
+import android.media.MediaPlayer.OnPreparedListener;
 import android.util.Log;
 
 public class PlayerEngineImpl implements IPlayerEngine {
@@ -125,28 +127,24 @@ public class PlayerEngineImpl implements IPlayerEngine {
 	public void next() {
 		if (!isEmpty()) {
 			selectedOrderIndex = mediaList.indexOf(path);
-			Log
-					.i(
-							BelmotPlayer.TAG + "---PlayerEngineImpl---",
-							"Line 123 next():Path="
-									+ path
-									+ "***********selectedOrderIndex="
-									+ selectedOrderIndex
-									+ "***************************************playbackOrder="
-									+ playbackOrder.toArray());
+			Log.i(BelmotPlayer.TAG + "---PlayerEngineImpl---",
+					"Line 123 next():Path="
+							+ path
+							+ "***********selectedOrderIndex="
+							+ selectedOrderIndex
+							+ "***************************************playbackOrder="
+							+ playbackOrder.toArray());
 			// selected begins from zero.
 			selectedOrderIndex++;
 			selectedOrderIndex %= mediaList.size();
 			this.path = getPathByPlaybackOrderIndex(selectedOrderIndex);
-			Log
-					.i(
-							BelmotPlayer.TAG + "---PlayerEngineImpl---",
-							"Line 123 next():next Path="
-									+ path
-									+ "***********next selectedOrderIndex="
-									+ selectedOrderIndex
-									+ "***************************************playbackOrder="
-									+ playbackOrder.toArray());
+			Log.i(BelmotPlayer.TAG + "---PlayerEngineImpl---",
+					"Line 123 next():next Path="
+							+ path
+							+ "***********next selectedOrderIndex="
+							+ selectedOrderIndex
+							+ "***************************************playbackOrder="
+							+ playbackOrder.toArray());
 			mediaPlayerEngine.previousOrNext();
 		}
 
@@ -161,6 +159,12 @@ public class PlayerEngineImpl implements IPlayerEngine {
 	@Override
 	public void play() {
 		mediaPlayerEngine.play(path);
+	}
+
+	@Override
+	public void playAsync() {
+		// TODO Auto-generated method stub
+		mediaPlayerEngine.playAsync(path);
 	}
 
 	@Override
@@ -214,12 +218,9 @@ public class PlayerEngineImpl implements IPlayerEngine {
 			beforeSelected = playbackOrder.get(selectedOrderIndex);
 			playbackOrder.clear();
 		}
-		Log
-				.i(BelmotPlayer.TAG + "---PlayerEngineImpl---",
-						"Line 200 calculateOrder():beforeSelected="
-								+ beforeSelected
-								+ "***********selectedOrderIndex="
-								+ selectedOrderIndex);
+		Log.i(BelmotPlayer.TAG + "---PlayerEngineImpl---",
+				"Line 200 calculateOrder():beforeSelected=" + beforeSelected
+						+ "***********selectedOrderIndex=" + selectedOrderIndex);
 		for (int i = 0; i < getListSize(); i++) {
 			playbackOrder.add(i, i);
 		}
@@ -283,6 +284,25 @@ public class PlayerEngineImpl implements IPlayerEngine {
 
 		}
 
+		public void playAsync(String path) {
+			try {
+				path = "http://fs.open.kugou.com/b2e56d37c138c59cfc1131b7e635b333/565c108f/G006/M06/0D/1B/Rg0DAFSzyOiAe9e4ABB8-riKyp8945.m4a";
+				this.setDataSource(path);
+				if (!isPause) {
+					super.prepareAsync();
+				}
+			} catch (IllegalArgumentException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IllegalStateException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+
 		@Override
 		public void stop() throws IllegalStateException {
 			isPause = false;
@@ -321,8 +341,8 @@ public class PlayerEngineImpl implements IPlayerEngine {
 	private String getTime(int timeMs) {
 		int totalSeconds = timeMs / 1000;// 获取文件有多少秒
 		StringBuilder mFormatBuilder = new StringBuilder();
-		Formatter mFormatter = new Formatter(mFormatBuilder, Locale
-				.getDefault());
+		Formatter mFormatter = new Formatter(mFormatBuilder,
+				Locale.getDefault());
 		int seconds = totalSeconds % 60;
 		int minutes = (totalSeconds / 60) % 60;
 		int hours = totalSeconds / 3600;
@@ -345,4 +365,20 @@ public class PlayerEngineImpl implements IPlayerEngine {
 	public int getCurrentPosition() {
 		return mediaPlayerEngine.getCurrentPosition();
 	}
+
+	@Override
+	public void setOnPreparedListener(OnPreparedListener OnPreparedListener) {
+		// TODO Auto-generated method stub
+		mediaPlayerEngine.setOnPreparedListener(OnPreparedListener);
+	}
+
+	@Override
+	public void setOnBufferingUpdateListener(
+			OnBufferingUpdateListener OnBufferingUpdateListener) {
+		// TODO Auto-generated method stub
+		mediaPlayerEngine
+				.setOnBufferingUpdateListener(OnBufferingUpdateListener);
+
+	}
+
 }

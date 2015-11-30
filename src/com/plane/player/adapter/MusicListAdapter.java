@@ -10,23 +10,25 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.media.MediaPlayer;
+import android.media.MediaPlayer.OnBufferingUpdateListener;
 import android.media.MediaPlayer.OnCompletionListener;
+import android.media.MediaPlayer.OnPreparedListener;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.View.OnClickListener;
 import android.view.View.OnLongClickListener;
+import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.BaseAdapter;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
+import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.widget.CompoundButton.OnCheckedChangeListener;
 
-import com.plane.player.R;
 import com.plane.player.BelmotPlayer;
+import com.plane.player.R;
 import com.plane.player.activity.LocalMusicListActivity;
 import com.plane.player.activity.MusicListActivity;
 import com.plane.player.activity.SearchMusicActivity;
@@ -37,7 +39,8 @@ import com.plane.player.dao.impl.AudioDaoImpl;
 import com.plane.player.domain.Audio;
 import com.plane.player.media.PlayerEngineImpl.PlaybackMode;
 
-public class MusicListAdapter extends BaseAdapter {
+public class MusicListAdapter extends BaseAdapter implements
+		OnPreparedListener, OnBufferingUpdateListener {
 	private List<Boolean> checkBoxesStatus;
 	private Context context;
 	private Set<Integer> checkedBoxIds;
@@ -170,15 +173,15 @@ public class MusicListAdapter extends BaseAdapter {
 		if (null != belmotPlayer.getPlayerEngine()) {
 			String path = audioList.get(position).getPath();
 			if (belmotPlayer.getPlayerEngine().isPlaying()
-					&& belmotPlayer.getPlayerEngine().getPlayingPath().equals(
-							path)) {
+					&& belmotPlayer.getPlayerEngine().getPlayingPath()
+							.equals(path)) {
 				holder.index_tv.setPadding(30, 0, 0, 0);
 				holder.play_btn.setVisibility(ImageButton.VISIBLE);
 				holder.play_btn
 						.setImageResource(R.drawable.list_playing_indicator);
 			} else if (belmotPlayer.getPlayerEngine().isPause()
-					&& belmotPlayer.getPlayerEngine().getPlayingPath().equals(
-							path)) {
+					&& belmotPlayer.getPlayerEngine().getPlayingPath()
+							.equals(path)) {
 
 				holder.index_tv.setPadding(30, 0, 0, 0);
 				holder.play_btn.setVisibility(ImageButton.VISIBLE);
@@ -255,6 +258,8 @@ public class MusicListAdapter extends BaseAdapter {
 						next();
 					}
 				});
+		belmotPlayer.getPlayerEngine().setOnBufferingUpdateListener(this);
+		belmotPlayer.getPlayerEngine().setOnPreparedListener(this);
 		belmotPlayer.getPlayerEngine().setPlaybackMode(PlaybackMode.NORMAL);
 
 	}
@@ -273,7 +278,8 @@ public class MusicListAdapter extends BaseAdapter {
 				belmotPlayer.getPlayerEngine().reset();
 			}
 			belmotPlayer.getPlayerEngine().setPlayingPath(path);
-			belmotPlayer.getPlayerEngine().play();
+			// belmotPlayer.getPlayerEngine().play();
+			belmotPlayer.getPlayerEngine().playAsync();
 		}
 
 	}
@@ -349,5 +355,21 @@ public class MusicListAdapter extends BaseAdapter {
 				}).setTitle(((Audio) getItem(position)).getName());
 		AlertDialog alert = builder.create();
 		alert.show();
+	}
+
+	@Override
+	public void onBufferingUpdate(MediaPlayer arg0, int arg1) {
+		// TODO Auto-generated method stub
+		System.out.println("onBufferingUpdate  arg1=" + arg1);
+		if (arg1 == 100) {
+			belmotPlayer.getPlayerEngine().setOnBufferingUpdateListener(null);
+			belmotPlayer.getPlayerEngine().setOnPreparedListener(null);
+		}
+	}
+
+	@Override
+	public void onPrepared(MediaPlayer arg0) {
+		// TODO Auto-generated method stub
+		arg0.start();
 	}
 }
