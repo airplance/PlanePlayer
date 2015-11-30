@@ -61,9 +61,11 @@ public class LocalMusicListActivity extends BaseListActivity {
 
 				} else if (event.getAction() == MotionEvent.ACTION_UP) {
 					TabHost.TabSpec tab_spec_menu_list = tabActivity
-							.getTabHost().newTabSpec(
+							.getTabHost()
+							.newTabSpec(
 									Constants.TAB_SPEC_TAG.MAIN_SPEC_TAG
-											.getId()).setIndicator(
+											.getId())
+							.setIndicator(
 									Constants.TAB_SPEC_TAG.MAIN_SPEC_TAG
 											.getId());
 					tab_spec_menu_list.setContent(toMenuListActivity);
@@ -149,4 +151,6 @@ public class LocalMusicListActivity extends BaseListActivity {
 		}
 		return popUpMenu;
 	}
+
+	
 }

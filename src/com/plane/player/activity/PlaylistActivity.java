@@ -127,8 +127,8 @@ public class PlaylistActivity extends BaseListActivity {
 
 				} else if (event.getAction() == MotionEvent.ACTION_UP) {
 					TabHost.TabSpec tab_spec_menu_list = tabActivity
-							.getTabHost().newTabSpec("menu_list").setIndicator(
-									"menu_list");
+							.getTabHost().newTabSpec("menu_list")
+							.setIndicator("menu_list");
 					tab_spec_menu_list.setContent(toMenuListActivity);
 					tabActivity.getTabHost().addTab(tab_spec_menu_list);
 					tabActivity.getTabHost().setCurrentTabByTag("menu_list");
@@ -197,4 +197,11 @@ public class PlaylistActivity extends BaseListActivity {
 		popUpMenu.add(PopupMenu.HELP.getMenu());
 		popUpMenu.add(PopupMenu.SETTING.getMenu());
 	}
+
+
+	@Override
+	protected void onPause() {
+		// TODO Auto-generated method stub
+		super.onPause();
+	};
 }

@@ -2,6 +2,8 @@ package com.plane.player.activity;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.media.MediaPlayer;
+import android.media.MediaPlayer.OnCompletionListener;
 import android.os.Bundle;
 import android.os.Handler;
 import android.view.MotionEvent;
@@ -64,12 +66,12 @@ public class PlayerActivity extends Activity {
 				.getPlayingPath().split("/").length - 1]);
 
 		playback_mode_btn = (ImageButton) findViewById(R.id.playback_mode);
+		initPlayBackMode();
 		playback_mode_btn.setOnClickListener(new OnClickListener() {
 
 			@Override
 			public void onClick(View v) {
-				belmotPlayer.getPlayerEngine().setPlaybackMode(
-						PlaybackMode.SHUFFLE);
+				OnClickPlayBackMode();
 			}
 		});
 
@@ -92,8 +94,9 @@ public class PlayerActivity extends Activity {
 
 			@Override
 			public void onClick(View v) {
+				seek_bar_handler.removeCallbacks(refresh);
 				belmotPlayer.getPlayerEngine().previous();
-
+				doReSetSong();
 			}
 		});
 		playback_next_btn = (ImageButton) findViewById(R.id.playback_next);
@@ -101,8 +104,9 @@ public class PlayerActivity extends Activity {
 
 			@Override
 			public void onClick(View v) {
+				seek_bar_handler.removeCallbacks(refresh);
 				belmotPlayer.getPlayerEngine().next();
-
+				doReSetSong();
 			}
 		});
 
@@ -121,11 +125,21 @@ public class PlayerActivity extends Activity {
 					.getDuration()));
 			seek_bar_handler.postDelayed(refresh, 1000);
 			playback_toggle_btn
-					.setBackgroundResource(R.drawable.play_button_default);
+					.setBackgroundResource(R.drawable.pause_button_default);
 		} else {
 			playback_toggle_btn
-					.setBackgroundResource(R.drawable.pause_button_default);
+					.setBackgroundResource(R.drawable.play_button_default);
 		}
+
+		belmotPlayer.getPlayerEngine().setOnCompletionListener(
+				new OnCompletionListener() {
+					@Override
+					public void onCompletion(MediaPlayer mp) {
+						seek_bar_handler.removeCallbacks(refresh);
+						belmotPlayer.getPlayerEngine().next();
+						doReSetSong();
+					}
+				});
 	}
 
 	OnSeekBarChangeListener seekbarListener = new OnSeekBarChangeListener() {
@@ -196,6 +210,68 @@ public class PlayerActivity extends Activity {
 			playback_toggle_btn
 					.setBackgroundResource(R.drawable.pause_button_default);
 		}
+	}
 
+	@Override
+	protected void onDestroy() {
+		// TODO Auto-generated method stub
+		super.onDestroy();
+	}
+
+	/**
+	 * 上一首/下一首控件的reset操作
+	 */
+	public void doReSetSong() {
+		// seek_bar_handler.removeCallbacks(refresh);
+		seek_bar.setProgress(0);
+		seek_bar.setMax(Integer.valueOf(belmotPlayer.getPlayerEngine()
+				.getDuration()));
+		playback_current_time_tv.setText(belmotPlayer.getPlayerEngine()
+				.getCurrentTime());
+		playback_total_time_tv.setText(belmotPlayer.getPlayerEngine()
+				.getDurationTime());
+		playback_audio_name_tv.setText(belmotPlayer.getPlayerEngine()
+				.getPlayingPath().split("/")[belmotPlayer.getPlayerEngine()
+				.getPlayingPath().split("/").length - 1]);
+		seek_bar_handler.postDelayed(refresh, 1000);
+	}
+
+	public void initPlayBackMode() {
+		PlaybackMode mode = belmotPlayer.getPlayerEngine().getPlayMode();
+		int brid = R.drawable.playmode_sequence_default;
+		if (mode == PlaybackMode.NORMAL) {
+			brid = R.drawable.playmode_sequence_default;
+		} else if (mode == PlaybackMode.SHUFFLE) {
+			brid = R.drawable.playmode_repeate_random_default;
+		} else if (mode == PlaybackMode.SHUFFLE_AND_REPEAT) {
+			brid = R.drawable.playmode_repeate_all_default;
+		} else if (mode == PlaybackMode.REPEAT) {
+			brid = R.drawable.playmode_repeate_single_default;
+		}
+		playback_mode_btn.setBackgroundResource(brid);
+	}
+
+	/**
+	 * 播放歌曲模式的按钮操作
+	 */
+	public void OnClickPlayBackMode() {
+		PlaybackMode mode = belmotPlayer.getPlayerEngine().getPlayMode();
+		PlaybackMode m = PlaybackMode.NORMAL;
+		int brid = R.drawable.playmode_sequence_default;
+		if (mode == PlaybackMode.NORMAL) {
+			m = PlaybackMode.SHUFFLE;
+			brid = R.drawable.playmode_repeate_random_default;
+		} else if (mode == PlaybackMode.SHUFFLE) {
+			m = PlaybackMode.SHUFFLE_AND_REPEAT;
+			brid = R.drawable.playmode_repeate_all_default;
+		} else if (mode == PlaybackMode.SHUFFLE_AND_REPEAT) {
+			m = PlaybackMode.REPEAT;
+			brid = R.drawable.playmode_repeate_single_default;
+		} else if (mode == PlaybackMode.REPEAT) {
+			m = PlaybackMode.NORMAL;
+			brid = R.drawable.playmode_sequence_default;
+		}
+		playback_mode_btn.setBackgroundResource(brid);
+		belmotPlayer.getPlayerEngine().setPlaybackMode(m);
 	}
 }
