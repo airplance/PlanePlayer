@@ -61,10 +61,13 @@ public class PlayerActivity extends Activity {
 		back_btn.setOnTouchListener(back_btn_listener);
 
 		playback_audio_name_tv = (TextView) findViewById(R.id.playback_audio_name);
-		playback_audio_name_tv.setText(belmotPlayer.getPlayerEngine()
-				.getPlayingPath().split("/")[belmotPlayer.getPlayerEngine()
-				.getPlayingPath().split("/").length - 1]);
-
+		String path[] = belmotPlayer.getPlayerEngine().getPlayingPath()
+				.split("/");
+		if (path.length > 1) {
+			playback_audio_name_tv.setText(path[path.length - 1]);
+		} else {
+			playback_audio_name_tv.setText(path[0]);
+		}
 		playback_mode_btn = (ImageButton) findViewById(R.id.playback_mode);
 		initPlayBackMode();
 		playback_mode_btn.setOnClickListener(new OnClickListener() {
@@ -230,9 +233,13 @@ public class PlayerActivity extends Activity {
 				.getCurrentTime());
 		playback_total_time_tv.setText(belmotPlayer.getPlayerEngine()
 				.getDurationTime());
-		playback_audio_name_tv.setText(belmotPlayer.getPlayerEngine()
-				.getPlayingPath().split("/")[belmotPlayer.getPlayerEngine()
-				.getPlayingPath().split("/").length - 1]);
+		String path[] = belmotPlayer.getPlayerEngine().getPlayingPath()
+				.split("/");
+		if (path.length > 1) {
+			playback_audio_name_tv.setText(path[path.length - 1]);
+		} else {
+			playback_audio_name_tv.setText(path[0]);
+		}
 		seek_bar_handler.postDelayed(refresh, 1000);
 	}
 

@@ -286,7 +286,6 @@ public class PlayerEngineImpl implements IPlayerEngine {
 
 		public void playAsync(String path) {
 			try {
-				path = "http://fs.open.kugou.com/b2e56d37c138c59cfc1131b7e635b333/565c108f/G006/M06/0D/1B/Rg0DAFSzyOiAe9e4ABB8-riKyp8945.m4a";
 				this.setDataSource(path);
 				if (!isPause) {
 					super.prepareAsync();

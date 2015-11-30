@@ -3,6 +3,9 @@ package com.plane.player.dao.impl;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
@@ -11,11 +14,22 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.provider.MediaStore;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+import com.lidroid.xutils.HttpUtils;
+import com.lidroid.xutils.exception.HttpException;
+import com.lidroid.xutils.http.ResponseInfo;
+import com.lidroid.xutils.http.callback.RequestCallBack;
+import com.lidroid.xutils.http.client.HttpRequest.HttpMethod;
 import com.plane.player.dao.AudioDao;
+import com.plane.player.dao.JRequestCallBack;
+import com.plane.player.dao.OnlineAudioDao;
 import com.plane.player.db.constants.UriConstant;
 import com.plane.player.domain.Audio;
+import com.plane.player.domain.OnLineAudio;
 
-public class AudioDaoImpl extends ContextWrapper implements AudioDao {
+public class AudioDaoImpl extends ContextWrapper implements AudioDao,
+		OnlineAudioDao {
 	private Uri uri = Uri.parse(UriConstant.AUDIO_LIST_URI);
 	private ContentResolver cr;
 
@@ -73,9 +87,12 @@ public class AudioDaoImpl extends ContextWrapper implements AudioDao {
 			for (int i = 0; i < cursor.getCount(); i++) {
 				cursor.moveToPosition(i);
 				Audio audio = new Audio();
-				audio.setId(cursor.getLong(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID)));
-				audio.setName(cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DISPLAY_NAME)));
-				audio.setPath(cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA)));
+				audio.setId(cursor.getLong(cursor
+						.getColumnIndexOrThrow(MediaStore.Audio.Media._ID)));
+				audio.setName(cursor.getString(cursor
+						.getColumnIndexOrThrow(MediaStore.Audio.Media.DISPLAY_NAME)));
+				audio.setPath(cursor.getString(cursor
+						.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA)));
 				musicList.add(audio);
 			}
 		}
@@ -113,8 +130,8 @@ public class AudioDaoImpl extends ContextWrapper implements AudioDao {
 	@Override
 	public void removeAudioFromPlaylist(String audioId, String playlistId) {
 		ContentResolver cr = getContentResolver();
-		cr.delete(uri, "id = ? and playlist_id = ?", new String[] {
-				audioId, playlistId });
+		cr.delete(uri, "id = ? and playlist_id = ?", new String[] { audioId,
+				playlistId });
 	}
 
 	@Override
@@ -139,7 +156,7 @@ public class AudioDaoImpl extends ContextWrapper implements AudioDao {
 	public List<Audio> getAudioListByPlaylistId(String playlistId) {
 		cr = getContentResolver();
 		List<Audio> audioList = new ArrayList<Audio>();
-		String[] projection = { "id", "audio_path","audio_name","playlist_id" };
+		String[] projection = { "id", "audio_path", "audio_name", "playlist_id" };
 		String selection = "playlist_id = ?";
 		Cursor c = cr.query(uri, projection, selection,
 				new String[] { playlistId }, null);
@@ -171,10 +188,8 @@ public class AudioDaoImpl extends ContextWrapper implements AudioDao {
 				Audio audio = new Audio();
 				audio.setId(cursor.getLong(cursor
 						.getColumnIndexOrThrow(MediaStore.Audio.Media._ID)));
-				audio
-						.setName(cursor
-								.getString(cursor
-										.getColumnIndexOrThrow(MediaStore.Audio.Media.DISPLAY_NAME)));
+				audio.setName(cursor.getString(cursor
+						.getColumnIndexOrThrow(MediaStore.Audio.Media.DISPLAY_NAME)));
 				audio.setPath(cursor.getString(cursor
 						.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA)));
 				musicList.add(audio);
@@ -182,5 +197,42 @@ public class AudioDaoImpl extends ContextWrapper implements AudioDao {
 		}
 		cursor.close();
 		return musicList;
+	}
+
+	// /////////////////////////////////////////////////////////////
+
+	@Override
+	public void getJLocalOnLineAudioList(String url,
+			final JRequestCallBack jCallBack) {
+		HttpUtils http = new HttpUtils();
+		// TODO Auto-generated method stub
+		http.send(HttpMethod.GET, url, new RequestCallBack<String>() {
+			@Override
+			public void onSuccess(ResponseInfo<String> arg0) {
+				// TODO Auto-generated method stub
+				String result = arg0.result;
+				JSONObject jo = null;
+				try {
+					jo = new JSONObject(result);
+					result = jo.getJSONObject("data").getString("songs");
+				} catch (JSONException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				Gson gson = new Gson();
+
+				List<OnLineAudio> temp = gson.fromJson(result,
+						new TypeToken<List<OnLineAudio>>() {
+						}.getType());
+				jCallBack.onSuccess(temp);
+			}
+
+			@Override
+			public void onFailure(HttpException arg0, String arg1) {
+				// TODO Auto-generated method stub
+
+			}
+		});
+
 	}
 }

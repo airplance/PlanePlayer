@@ -278,8 +278,8 @@ public class MusicListAdapter extends BaseAdapter implements
 				belmotPlayer.getPlayerEngine().reset();
 			}
 			belmotPlayer.getPlayerEngine().setPlayingPath(path);
-			// belmotPlayer.getPlayerEngine().play();
-			belmotPlayer.getPlayerEngine().playAsync();
+			 belmotPlayer.getPlayerEngine().play();
+//			belmotPlayer.getPlayerEngine().playAsync();
 		}
 
 	}
