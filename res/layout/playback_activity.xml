@@ -83,7 +83,6 @@
         android:layout_above="@+id/player_control_bar"
         android:layout_below="@+id/playback_current_playlist_name"
         android:animateOnClick="true"
-        android:bottomOffset="-80.0px"
         android:content="@+id/playback_lyrics"
         android:handle="@+id/drawer_handle"
         android:orientation="vertical" >
