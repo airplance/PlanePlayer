@@ -1,5 +1,8 @@
 package com.plane.player.activity;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import android.app.Activity;
 import android.content.Intent;
 import android.media.MediaPlayer;
@@ -15,10 +18,17 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.SeekBar.OnSeekBarChangeListener;
 
+import com.google.gson.JsonObject;
+import com.lidroid.xutils.HttpUtils;
+import com.lidroid.xutils.exception.HttpException;
+import com.lidroid.xutils.http.ResponseInfo;
+import com.lidroid.xutils.http.callback.RequestCallBack;
+import com.lidroid.xutils.http.client.HttpRequest.HttpMethod;
 import com.plane.player.R;
 import com.plane.player.BelmotPlayer;
 import com.plane.player.media.PlayerEngineImpl.PlaybackMode;
 import com.plane.player.utils.Constants;
+import com.plane.player.view.LrcView;
 
 public class PlayerActivity extends Activity {
 	private BelmotPlayer belmotPlayer;
@@ -39,13 +49,18 @@ public class PlayerActivity extends Activity {
 
 	private Handler seek_bar_handler = new Handler();
 
+	
+	private LrcView lrcView;
 	private Runnable refresh = new Runnable() {
 		public void run() {
-			int currently_Progress = seek_bar.getProgress() + 1000;// 加1秒
+			int currently_Progress = seek_bar.getProgress() + 100;// 加1秒
 			seek_bar.setProgress(currently_Progress);
 			playback_current_time_tv.setText(belmotPlayer.getPlayerEngine()
 					.getCurrentTime());// 每1000m刷新歌曲音轨
-			seek_bar_handler.postDelayed(refresh, 1000);
+			seek_bar_handler.postDelayed(refresh, 100);
+			if (lrcContent!=null) {
+				lrcView.changeCurrent(belmotPlayer.getPlayerEngine().getCurrentPosition());
+			}
 		}
 	};
 
@@ -57,6 +72,9 @@ public class PlayerActivity extends Activity {
 			belmotPlayer = BelmotPlayer.getInstance();
 		}
 		setContentView(R.layout.playback_activity);
+		
+		lrcView=(LrcView)findViewById(R.id.playback_lyrics);
+		
 		back_btn = (ImageButton) findViewById(R.id.playback_list);
 		back_btn.setOnTouchListener(back_btn_listener);
 
@@ -143,6 +161,8 @@ public class PlayerActivity extends Activity {
 						doReSetSong();
 					}
 				});
+
+		initLrc();
 	}
 
 	OnSeekBarChangeListener seekbarListener = new OnSeekBarChangeListener() {
@@ -280,5 +300,71 @@ public class PlayerActivity extends Activity {
 		}
 		playback_mode_btn.setBackgroundResource(brid);
 		belmotPlayer.getPlayerEngine().setPlaybackMode(m);
+	}
+
+	private HttpUtils http = new HttpUtils();
+
+	private RequestCallBack<String> callB = new RequestCallBack<String>() {
+
+		@Override
+		public void onFailure(HttpException arg0, String arg1) {
+			// TODO Auto-generated method stub
+
+		}
+
+		@Override
+		public void onSuccess(ResponseInfo<String> arg0) {
+			// TODO Auto-generated method stub
+			String result = arg0.result;
+			try {
+				if (tag == SEARCH) {
+					JSONObject jo = new JSONObject(result);
+					jo = jo.getJSONArray("song").getJSONObject(0);
+					songid = jo.getString("songid");
+					tag=LRC;
+					initLrc();
+				} else if (tag == LRC) {
+					JSONObject jo = new JSONObject(result);
+					lrcContent = jo.getString("lrcContent");
+					lrcView.setLrc(lrcContent);
+				}
+			} catch (JSONException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				lrcContent="出错";
+			}
+		}
+	};
+
+	private final int SEARCH = 0;
+	private final int LRC = 1;
+	private int tag = SEARCH;
+	private String songid = null,lrcContent=null;
+
+	private void initLrc() {
+		String url = "";
+		switch (tag) {
+		case SEARCH:
+			tag = SEARCH;
+			String path[] = belmotPlayer.getPlayerEngine().getPlayingPath()
+					.split("/");
+			String key = null;
+			if (path.length > 1) {
+				key = path[path.length - 1];
+			} else {
+				key = path[0];
+			}
+			key=key.replace(" ", "");
+			key=key.replace(".mp3", "");
+			url = "http://tingapi.ting.baidu.com/v1/restserver/ting?from=webapp_music&method=baidu.ting.search.catalogSug&query="
+					+ key;
+			break;
+		case LRC:
+			tag = LRC;
+			url = "http://tingapi.ting.baidu.com/v1/restserver/ting?method=baidu.ting.song.lry&songid="
+					+ songid;
+			break;
+		}
+		http.send(HttpMethod.GET, url, callB);
 	}
 }
