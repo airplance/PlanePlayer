@@ -75,7 +75,7 @@ public class LrcView extends View {
 
 		// 计算lrc面板的高度
 		mLrcHeight = (int) (mTextSize + mDividerHeight) * mRows + 5;
-
+		mLrcHeight = getMeasuredHeight();
 		mNormalPaint = new Paint();
 		mCurrentPaint = new Paint();
 
@@ -90,21 +90,23 @@ public class LrcView extends View {
 	protected void onSizeChanged(int w, int h, int oldw, int oldh) {
 		// 获取view宽度
 		mViewWidth = getMeasuredWidth();
+		mLrcHeight = getMeasuredHeight();
 		super.onSizeChanged(w, h, oldw, oldh);
 	}
 
-	@Override
-	protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-		super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-		// 重新设置view的高度
-		int measuredHeight = MeasureSpec.makeMeasureSpec(mLrcHeight,
-				MeasureSpec.AT_MOST);
-		setMeasuredDimension(widthMeasureSpec, measuredHeight);
-	}
+	// @Override
+	// protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+	// super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+	// // 重新设置view的高度
+	// int measuredHeight = MeasureSpec.makeMeasureSpec(mLrcHeight,
+	// MeasureSpec.AT_MOST);
+	// setMeasuredDimension(widthMeasureSpec, heightMeasureSpec);
+	// }
 
 	@Override
 	protected void onDraw(Canvas canvas) {
 		super.onDraw(canvas);
+
 		if (mLrcs.isEmpty() || mTimes.isEmpty()) {
 			return;
 		}
@@ -121,7 +123,7 @@ public class LrcView extends View {
 
 		// 将画布上移
 		canvas.translate(0,
-				-((mCurrentLine - 3) * (mTextSize + mDividerHeight)));
+				-((mCurrentLine - 6) * (mTextSize + mDividerHeight)));
 
 		// 画当前行上面的
 		for (int i = mCurrentLine - 1; i >= 0; i--) {
@@ -185,26 +187,44 @@ public class LrcView extends View {
 	public synchronized void changeCurrent(long time) {
 		// 如果当前时间小于下一句开始的时间
 		// 直接return
-		if (mNextTime > time) {
-			return;
-		}
+		// if (mNextTime > time) {
+		// return;
+		// }
 
 		// 每次进来都遍历存放的时间
 		for (int i = 0; i < mTimes.size(); i++) {
 			// 发现这个时间大于传进来的时间
 			// 那么现在就应该显示这个时间前面的对应的那一行
 			// 每次都重新显示，是不是要判断：现在正在显示就不刷新了
-			if (mTimes.get(i) > time && i >= mCurrentLine + 1) {
-				System.out.println("换");
-				mNextTime = mTimes.get(i);
-				mCurrentLine = i <= 1 ? 0 : i - 1;
-				postInvalidate();
+			// if (mTimes.get(i) > time && i >= mCurrentLine + 1) {
+			// System.out.println("换");
+			// mNextTime = mTimes.get(i);
+			// mCurrentLine = i <= 1 ? 0 : i - 1;
+			// postInvalidate();
+			// break;
+			// }
+			if (mTimes.get(i) > time) {
+				if (i == mCurrentLine+1) {
+
+				} else {
+					System.out.println("换");
+					mNextTime = mTimes.get(i);
+					mCurrentLine = i <= 1 ? 0 : i - 1;
+					postInvalidate();
+				}
 				break;
 			}
 		}
 	}
 
-	
+	public void setReSetLrc() {
+		mLrcs.clear();
+		mTimes.clear();
+		mLrcs.clear();
+		mNextTime = 0;
+		mCurrentLine = 0;
+	}
+
 	public void setLrc(String lrc) {
 		mLrcs.clear();
 		String line = null;
@@ -227,7 +247,7 @@ public class LrcView extends View {
 			mLrcs.add(arr[1]);
 		}
 	}
-	
+
 	// 外部提供方法
 	// 设置lrc的路径
 	public void setLrcPath(String path) throws Exception {

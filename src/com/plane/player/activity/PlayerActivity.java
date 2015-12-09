@@ -49,8 +49,8 @@ public class PlayerActivity extends Activity {
 
 	private Handler seek_bar_handler = new Handler();
 
-	
 	private LrcView lrcView;
+	private TextView lrcViewNo;
 	private Runnable refresh = new Runnable() {
 		public void run() {
 			int currently_Progress = seek_bar.getProgress() + 100;// 加1秒
@@ -58,8 +58,9 @@ public class PlayerActivity extends Activity {
 			playback_current_time_tv.setText(belmotPlayer.getPlayerEngine()
 					.getCurrentTime());// 每1000m刷新歌曲音轨
 			seek_bar_handler.postDelayed(refresh, 100);
-			if (lrcContent!=null) {
-				lrcView.changeCurrent(belmotPlayer.getPlayerEngine().getCurrentPosition());
+			if (lrcContent != null) {
+				lrcView.changeCurrent(belmotPlayer.getPlayerEngine()
+						.getCurrentPosition());
 			}
 		}
 	};
@@ -72,9 +73,10 @@ public class PlayerActivity extends Activity {
 			belmotPlayer = BelmotPlayer.getInstance();
 		}
 		setContentView(R.layout.playback_activity);
-		
-		lrcView=(LrcView)findViewById(R.id.playback_lyrics);
-		
+
+		lrcView = (LrcView) findViewById(R.id.playback_lyrics);
+		lrcViewNo = (TextView) findViewById(R.id.playback_lyrics_no);
+
 		back_btn = (ImageButton) findViewById(R.id.playback_list);
 		back_btn.setOnTouchListener(back_btn_listener);
 
@@ -260,6 +262,12 @@ public class PlayerActivity extends Activity {
 		} else {
 			playback_audio_name_tv.setText(path[0]);
 		}
+		lrcView.setVisibility(View.INVISIBLE);
+		lrcViewNo.setVisibility(View.VISIBLE);
+		lrcViewNo.setText("搜索歌词中。。。");
+		tag = SEARCH;
+		lrcView.setReSetLrc();
+		initLrc();
 		seek_bar_handler.postDelayed(refresh, 1000);
 	}
 
@@ -321,17 +329,20 @@ public class PlayerActivity extends Activity {
 					JSONObject jo = new JSONObject(result);
 					jo = jo.getJSONArray("song").getJSONObject(0);
 					songid = jo.getString("songid");
-					tag=LRC;
+					tag = LRC;
 					initLrc();
 				} else if (tag == LRC) {
 					JSONObject jo = new JSONObject(result);
 					lrcContent = jo.getString("lrcContent");
 					lrcView.setLrc(lrcContent);
+					lrcView.setVisibility(View.VISIBLE);
+					lrcViewNo.setVisibility(View.INVISIBLE);
 				}
 			} catch (JSONException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
-				lrcContent="出错";
+				lrcContent = "出错";
+				lrcViewNo.setText("暂无歌词");
 			}
 		}
 	};
@@ -339,7 +350,7 @@ public class PlayerActivity extends Activity {
 	private final int SEARCH = 0;
 	private final int LRC = 1;
 	private int tag = SEARCH;
-	private String songid = null,lrcContent=null;
+	private String songid = null, lrcContent = null;
 
 	private void initLrc() {
 		String url = "";
@@ -354,8 +365,8 @@ public class PlayerActivity extends Activity {
 			} else {
 				key = path[0];
 			}
-			key=key.replace(" ", "");
-			key=key.replace(".mp3", "");
+			key = key.replace(" ", "");
+			key = key.replace(".mp3", "");
 			url = "http://tingapi.ting.baidu.com/v1/restserver/ting?from=webapp_music&method=baidu.ting.search.catalogSug&query="
 					+ key;
 			break;

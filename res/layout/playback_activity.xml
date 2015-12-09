@@ -83,7 +83,7 @@
         android:layout_above="@+id/player_control_bar"
         android:layout_below="@+id/playback_current_playlist_name"
         android:animateOnClick="true"
-        android:content="@+id/playback_lyrics"
+        android:content="@+id/playback_lyrics_layout"
         android:handle="@+id/drawer_handle"
         android:orientation="vertical" >
 
@@ -93,17 +93,30 @@
             android:layout_height="wrap_content"
             android:background="@drawable/lyr_handle_collapse" />
 
-        <com.plane.player.view.LrcView
-            android:id="@+id/playback_lyrics"
+        <RelativeLayout
+            android:id="@+id/playback_lyrics_layout"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_marginTop="100dip"
-            android:background="@android:color/white"
-            lrc:currentTextColor="#987654"
-            lrc:dividerHeight="10dip"
-            lrc:normalTextColor="@android:color/white"
-            lrc:rows="5"
-            lrc:textSize="20sp" />
+            android:layout_marginTop="100dip" >
+
+            <com.plane.player.view.LrcView
+                android:id="@+id/playback_lyrics"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:visibility="invisible"
+                lrc:currentTextColor="#00ff00"
+                lrc:dividerHeight="10dip"
+                lrc:normalTextColor="@android:color/white"
+                lrc:textSize="20sp" />
+
+            <TextView
+                android:id="@+id/playback_lyrics_no"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true"
+                android:text="搜索歌詞中。。。" />
+
+        </RelativeLayout>
     </SlidingDrawer>
 
     <LinearLayout

@@ -218,9 +218,9 @@ public class OnlineSearchAdapter extends BaseAdapter implements
 				// Toast.LENGTH_LONG).show();
 				String hash = ((OnLineAudio) getItem(position)).getHash();
 				HttpUtils http = new HttpUtils();
-				String string = "http://file.qianqian.com/data2/lrc/239104365/239104365.lrc";
-				// String string = UrlByHash.replace("hash=hash", "hash=" +
-				// hash);
+//				String string = "http://file.qianqian.com/data2/lrc/239104365/239104365.lrc";
+				 String string = UrlByHash.replace("hash=hash", "hash=" +
+				 hash);
 				http.send(HttpMethod.GET, string, hashCallBack);
 			}
 
@@ -383,6 +383,8 @@ public class OnlineSearchAdapter extends BaseAdapter implements
 	public void onPrepared(MediaPlayer arg0) {
 		// TODO Auto-generated method stub
 		arg0.start();
+		System.out.println("开始播放");
+
 	}
 
 	private RequestCallBack<String> hashCallBack = new RequestCallBack<String>() {
@@ -394,7 +396,7 @@ public class OnlineSearchAdapter extends BaseAdapter implements
 				JSONObject jo = new JSONObject(arg0.result);
 				String url = jo.getString("url");
 				String name = jo.getString("fileName");
-				url = "http://yinyueshiting.baidu.com/data2/music/c4814a5bfad71d0d15de0b18048fe81a/257859887/74092605248400128.mp3?xcode=e5f780ac9e40153eb50a78e8b32aeef1";
+//				url = "http://yinyueshiting.baidu.com/data2/music/c4814a5bfad71d0d15de0b18048fe81a/257859887/74092605248400128.mp3?xcode=e5f780ac9e40153eb50a78e8b32aeef1";
 				play(url);
 				belmotPlayer.getPlayerEngine().setPlayingPath(name);
 				notifyDataSetChanged();
