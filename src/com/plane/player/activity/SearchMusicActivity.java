@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.os.Bundle;
 import android.view.View;
@@ -16,8 +17,13 @@ import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import com.lidroid.xutils.ViewUtils;
 import com.lidroid.xutils.exception.HttpException;
+import com.lidroid.xutils.view.ViewInjectInfo;
+import com.lidroid.xutils.view.annotation.ViewInject;
+import com.plane.player.BelmotPlayer;
 import com.plane.player.R;
+import com.plane.player.adapter.MusicListAdapter;
 import com.plane.player.adapter.OnlineSearchAdapter;
 import com.plane.player.dao.JRequestCallBack;
 import com.plane.player.dao.impl.AudioDaoImpl;
@@ -26,19 +32,27 @@ import com.plane.player.utils.Constants.PopupMenu;
 
 public class SearchMusicActivity extends BaseListActivity {
 	private AudioDaoImpl audioDao = new AudioDaoImpl(this);
-	ImageButton search_btn;
-	Context context;
-	Set<Integer> popUpMenu = new HashSet<Integer>();
+
+	@ViewInject(R.id.search_button)
+	private ImageButton search_btn;
+	private Context context;
+	private Set<Integer> popUpMenu = new HashSet<Integer>();
 	private OnlineSearchAdapter adapter;
 	private List<OnLineAudio> mList = new ArrayList<OnLineAudio>();
-	private ListView list ;
+	private ListView list;
+
+	@ViewInject(R.id.search_edit)
+	private AutoCompleteTextView autoCompleteTextView;
+	private ProgressDialog dialog;
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		setContentView(R.layout.search_main_activity);
+		ViewUtils.inject(this);
 		context = this;
 		initPopupMenu();
-		final AutoCompleteTextView autoCompleteTextView = (AutoCompleteTextView) findViewById(R.id.search_edit);
-		search_btn = (ImageButton) findViewById(R.id.search_button);
+		dialog = new ProgressDialog(this, ProgressDialog.STYLE_HORIZONTAL);
+
 		list = getListView();
 		list.setOnScrollListener(scroll);
 		search_btn.setOnClickListener(new OnClickListener() {
@@ -52,14 +66,15 @@ public class SearchMusicActivity extends BaseListActivity {
 							getResources().getString(R.string.search_edit_hint),
 							Toast.LENGTH_LONG).show();
 				} else {
+					dialog.show();
 					String key = getURL(Gkey);
-					audioDao.getJLocalOnLineAudioList(key,jCallBack);
-							
+					audioDao.getJLocalOnLineAudioList(key, jCallBack);
+					// list.setAdapter(new MusicListAdapter(context, audioDao
+					// .getLocalAudioListByName(autoCompleteTextView
+					// .getText().toString()), null));
 				}
 			}
 		});
-		// R.layout.auto_complete_text, audioDao.getLocalAudioList());
-		// autoCompleteTextView.setAdapter(arrayAdapter);
 
 		super.onCreate(savedInstanceState);
 
@@ -79,33 +94,34 @@ public class SearchMusicActivity extends BaseListActivity {
 	}
 
 	private JRequestCallBack jCallBack = new JRequestCallBack() {
-		
-		@Override 
-		public void onSuccess(
-				List<OnLineAudio> onlinelist) {
+
+		@Override
+		public void onSuccess(List<OnLineAudio> onlinelist) {
 			// TODO Auto-generated method stub
+			if (dialog.isShowing()) {
+				dialog.dismiss();
+			}
 			if (isDefault) {
 				mList.clear();
 				isDefault = false;
 			}
 			mList.addAll(onlinelist);
 			if (adapter == null) {
-				adapter = new OnlineSearchAdapter(
-						context, mList, null);
+				adapter = new OnlineSearchAdapter(context, mList, null);
 				list.setAdapter(adapter);
 			} else {
 				adapter.notifyDataSetChanged();
 			}
+			BelmotPlayer.getInstance().getPlayerEngine().setmListOnLine(mList);
 		}
 
 		@Override
-		public void onFailure(HttpException arg0,
-				String arg1) {
+		public void onFailure(HttpException arg0, String arg1) {
 			// TODO Auto-generated method stub
 
 		}
 	};
-	
+
 	private OnScrollListener scroll = new OnScrollListener() {
 
 		@Override
@@ -113,7 +129,8 @@ public class SearchMusicActivity extends BaseListActivity {
 			// TODO Auto-generated method stub
 			if (arg1 == OnScrollListener.SCROLL_STATE_IDLE && isBotton) {
 				String key = getURL(Gkey);
-				audioDao.getJLocalOnLineAudioList(key,jCallBack);
+				dialog.show();
+				audioDao.getJLocalOnLineAudioList(key, jCallBack);
 			}
 		}
 
@@ -146,4 +163,33 @@ public class SearchMusicActivity extends BaseListActivity {
 	private boolean isBotton = false;// 是不是到达底部
 	private final static String KeyUrl = "http://lib9.service.kugou.com/websearch/index.php?cmd=100&pagesize=0";
 	private boolean isDefault = false;// 是不是点击后恢复默认数据
+
+	@Override
+	protected void onPause() {
+		// TODO Auto-generated method stub
+		super.onPause();
+	}
+
+	@Override
+	protected void onStart() {
+		// TODO Auto-generated method stub
+		super.onStart();
+	}
+
+	@Override
+	protected void onRestart() {
+		// TODO Auto-generated method stub
+		super.onRestart();
+		if (adapter != null) {
+			adapter.initPlayerEngine();
+			adapter.notifyDataSetChanged();
+		}
+	}
+
+	@Override
+	protected void onStop() {
+		// TODO Auto-generated method stub
+		super.onStop();
+	}
+
 }

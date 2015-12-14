@@ -9,6 +9,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import android.app.AlertDialog;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.media.MediaPlayer;
@@ -60,6 +61,8 @@ public class OnlineSearchAdapter extends BaseAdapter implements
 	private PlaylistDialog playlistDialog;
 	private AudioDao audioDao;
 	private String playlistId;
+	private ProgressDialog dialog;
+	private int currentId;
 
 	public OnlineSearchAdapter(Context context, List<OnLineAudio> onlinelist,
 			String playlistId) {
@@ -70,6 +73,7 @@ public class OnlineSearchAdapter extends BaseAdapter implements
 		// initCheckBoxsStaus();
 		initApplication();
 		initAudioDao();
+		dialog = new ProgressDialog(context, ProgressDialog.STYLE_HORIZONTAL);
 	}
 
 	private void initAudioDao() {
@@ -179,17 +183,17 @@ public class OnlineSearchAdapter extends BaseAdapter implements
 
 	private void initPlayerEngineView(final int position, ViewHolder holder) {
 		if (null != belmotPlayer.getPlayerEngine()) {
-			String path = audioList.get(position).getHash();
+			String PlaylistId = audioList.get(position).getPlaylistId();
 			if (belmotPlayer.getPlayerEngine().isPlaying()
-					&& belmotPlayer.getPlayerEngine().getPlayingPath()
-							.equals(path)) {
+					&& belmotPlayer.getPlayerEngine().getPlayListId()
+							.equals(PlaylistId)) {
 				holder.index_tv.setPadding(30, 0, 0, 0);
 				holder.play_btn.setVisibility(ImageButton.VISIBLE);
 				holder.play_btn
 						.setImageResource(R.drawable.list_playing_indicator);
 			} else if (belmotPlayer.getPlayerEngine().isPause()
 					&& belmotPlayer.getPlayerEngine().getPlayingPath()
-							.equals(path)) {
+							.equals(PlaylistId)) {
 
 				holder.index_tv.setPadding(30, 0, 0, 0);
 				holder.play_btn.setVisibility(ImageButton.VISIBLE);
@@ -216,11 +220,13 @@ public class OnlineSearchAdapter extends BaseAdapter implements
 				// + "--Path:"
 				// + ((Audio) getItem(position)).getPath(),
 				// Toast.LENGTH_LONG).show();
+				dialog.show();
 				String hash = ((OnLineAudio) getItem(position)).getHash();
 				HttpUtils http = new HttpUtils();
-//				String string = "http://file.qianqian.com/data2/lrc/239104365/239104365.lrc";
-				 String string = UrlByHash.replace("hash=hash", "hash=" +
-				 hash);
+				// String string =
+				// "http://file.qianqian.com/data2/lrc/239104365/239104365.lrc";
+				String string = UrlByHash.replace("hash=hash", "hash=" + hash);
+				currentId = position;
 				http.send(HttpMethod.GET, string, hashCallBack);
 			}
 
@@ -250,15 +256,22 @@ public class OnlineSearchAdapter extends BaseAdapter implements
 	// }
 
 	public void next() {
-		belmotPlayer.getPlayerEngine().next();
-		notifyDataSetChanged();
+		currentId++;
+		String hash = ((OnLineAudio) getItem(currentId)).getHash();
+		HttpUtils http = new HttpUtils();
+		// String string =
+		// "http://file.qianqian.com/data2/lrc/239104365/239104365.lrc";
+		String string = UrlByHash.replace("hash=hash", "hash=" + hash);
+		http.send(HttpMethod.GET, string, hashCallBack);
+		// belmotPlayer.getPlayerEngine().next();
+		// notifyDataSetChanged();
 	}
 
-	private void initPlayerEngine() {
+	public void initPlayerEngine() {
 		List<String> audioPathList = new ArrayList<String>();
 		if (!audioList.isEmpty()) {
 			for (OnLineAudio audio : audioList) {
-				audioPathList.add(audio.getHash());
+				audioPathList.add(audio.getPlaylistId());
 			}
 			belmotPlayer.getPlayerEngine().setMediaPathList(audioPathList);
 		}
@@ -277,11 +290,15 @@ public class OnlineSearchAdapter extends BaseAdapter implements
 
 	private void play(String path) {
 		initPlayerEngine();
+		OnLineAudio audio = audioList.get(currentId);
+		String playlistId2 = audio.getPlaylistId();
 		if (belmotPlayer.getPlayerEngine().isPlaying()
-				&& belmotPlayer.getPlayerEngine().getPlayingPath().equals(path)) {
+				&& belmotPlayer.getPlayerEngine().getPlayListId()
+						.equals(playlistId2)) {
 			belmotPlayer.getPlayerEngine().pause();
 		} else if (belmotPlayer.getPlayerEngine().isPause()
-				&& belmotPlayer.getPlayerEngine().getPlayingPath().equals(path)) {
+				&& belmotPlayer.getPlayerEngine().getPlayListId()
+						.equals(playlistId2)) {
 			belmotPlayer.getPlayerEngine().start();
 		} else {
 			if (belmotPlayer.getPlayerEngine().isPlaying()
@@ -289,7 +306,7 @@ public class OnlineSearchAdapter extends BaseAdapter implements
 				belmotPlayer.getPlayerEngine().reset();
 			}
 			belmotPlayer.getPlayerEngine().setPlayingPath(path);
-			// belmotPlayer.getPlayerEngine().play();
+			belmotPlayer.getPlayerEngine().setPlayListId(playlistId2);
 			belmotPlayer.getPlayerEngine().playAsync();
 		}
 
@@ -384,7 +401,7 @@ public class OnlineSearchAdapter extends BaseAdapter implements
 		// TODO Auto-generated method stub
 		arg0.start();
 		System.out.println("开始播放");
-
+		notifyDataSetChanged();
 	}
 
 	private RequestCallBack<String> hashCallBack = new RequestCallBack<String>() {
@@ -392,14 +409,19 @@ public class OnlineSearchAdapter extends BaseAdapter implements
 		@Override
 		public void onSuccess(ResponseInfo<String> arg0) {
 			// TODO Auto-generated method stub
+			if (dialog.isShowing()) {
+				dialog.dismiss();
+			}
 			try {
 				JSONObject jo = new JSONObject(arg0.result);
 				String url = jo.getString("url");
 				String name = jo.getString("fileName");
-//				url = "http://yinyueshiting.baidu.com/data2/music/c4814a5bfad71d0d15de0b18048fe81a/257859887/74092605248400128.mp3?xcode=e5f780ac9e40153eb50a78e8b32aeef1";
+				// url =
+				// "http://yinyueshiting.baidu.com/data2/music/c4814a5bfad71d0d15de0b18048fe81a/257859887/74092605248400128.mp3?xcode=e5f780ac9e40153eb50a78e8b32aeef1";
 				play(url);
 				belmotPlayer.getPlayerEngine().setPlayingPath(name);
-				notifyDataSetChanged();
+				String playlistId2 = audioList.get(currentId).getPlaylistId();
+				belmotPlayer.getPlayerEngine().setPlayListId(playlistId2);
 			} catch (JSONException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -413,5 +435,5 @@ public class OnlineSearchAdapter extends BaseAdapter implements
 		}
 	};
 
-	private final String UrlByHash = "http://m.kugou.com/app/i/getSongInfo.php?hash=hash&cmd=playInfo";
+	public final static String UrlByHash = "http://m.kugou.com/app/i/getSongInfo.php?hash=hash&cmd=playInfo";
 }

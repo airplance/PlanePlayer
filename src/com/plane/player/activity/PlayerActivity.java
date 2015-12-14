@@ -1,12 +1,16 @@
 package com.plane.player.activity;
 
+import java.util.List;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import android.app.Activity;
 import android.content.Intent;
 import android.media.MediaPlayer;
+import android.media.MediaPlayer.OnBufferingUpdateListener;
 import android.media.MediaPlayer.OnCompletionListener;
+import android.media.MediaPlayer.OnPreparedListener;
 import android.os.Bundle;
 import android.os.Handler;
 import android.view.MotionEvent;
@@ -15,42 +19,82 @@ import android.view.View.OnClickListener;
 import android.view.View.OnTouchListener;
 import android.widget.ImageButton;
 import android.widget.SeekBar;
-import android.widget.TextView;
 import android.widget.SeekBar.OnSeekBarChangeListener;
+import android.widget.TextView;
 
-import com.google.gson.JsonObject;
 import com.lidroid.xutils.HttpUtils;
+import com.lidroid.xutils.ViewUtils;
 import com.lidroid.xutils.exception.HttpException;
 import com.lidroid.xutils.http.ResponseInfo;
 import com.lidroid.xutils.http.callback.RequestCallBack;
 import com.lidroid.xutils.http.client.HttpRequest.HttpMethod;
-import com.plane.player.R;
+import com.lidroid.xutils.view.annotation.ViewInject;
+import com.lidroid.xutils.view.annotation.event.OnClick;
 import com.plane.player.BelmotPlayer;
+import com.plane.player.R;
+import com.plane.player.adapter.OnlineSearchAdapter;
+import com.plane.player.domain.OnLineAudio;
 import com.plane.player.media.PlayerEngineImpl.PlaybackMode;
 import com.plane.player.utils.Constants;
 import com.plane.player.view.LrcView;
 
-public class PlayerActivity extends Activity {
-	private BelmotPlayer belmotPlayer;
+public class PlayerActivity extends Activity implements
+OnPreparedListener, OnBufferingUpdateListener {
+
+	@ViewInject(R.id.playback_lyrics)
+	private LrcView lrcView;
+	@ViewInject(R.id.playback_lyrics_no)
+	private TextView lrcViewNo;
+	@ViewInject(R.id.playback_list)
 	private ImageButton back_btn;
-	private Intent intent;
+	@ViewInject(R.id.playback_audio_name)
 	private TextView playback_audio_name_tv;
-
+	@ViewInject(R.id.playback_mode)
 	private ImageButton playback_mode_btn;
+
+	@OnClick(R.id.playback_mode)
+	/**
+	 * 播放歌曲模式的按钮操作
+	 */
+	public void OnClickPlayBackMode(View v) {
+		PlaybackMode mode = belmotPlayer.getPlayerEngine().getPlayMode();
+		PlaybackMode m = PlaybackMode.NORMAL;
+		int brid = R.drawable.playmode_sequence_default;
+		if (mode == PlaybackMode.NORMAL) {
+			m = PlaybackMode.SHUFFLE;
+			brid = R.drawable.playmode_repeate_random_default;
+		} else if (mode == PlaybackMode.SHUFFLE) {
+			m = PlaybackMode.SHUFFLE_AND_REPEAT;
+			brid = R.drawable.playmode_repeate_all_default;
+		} else if (mode == PlaybackMode.SHUFFLE_AND_REPEAT) {
+			m = PlaybackMode.REPEAT;
+			brid = R.drawable.playmode_repeate_single_default;
+		} else if (mode == PlaybackMode.REPEAT) {
+			m = PlaybackMode.NORMAL;
+			brid = R.drawable.playmode_sequence_default;
+		}
+		playback_mode_btn.setBackgroundResource(brid);
+		belmotPlayer.getPlayerEngine().setPlaybackMode(m);
+	}
+
+	@ViewInject(R.id.playback_current_time)
 	private TextView playback_current_time_tv;
+	@ViewInject(R.id.playback_total_time)
 	private TextView playback_total_time_tv;
+	@ViewInject(R.id.playback_seeker)
 	private SeekBar seek_bar;
-
+	@ViewInject(R.id.playback_pre)
 	private ImageButton playback_pre_btn;
-
+	@ViewInject(R.id.playback_next)
 	private ImageButton playback_next_btn;
-
+	@ViewInject(R.id.playback_toggle)
 	private ImageButton playback_toggle_btn;
+
+	private BelmotPlayer belmotPlayer;
+	private Intent intent;
 
 	private Handler seek_bar_handler = new Handler();
 
-	private LrcView lrcView;
-	private TextView lrcViewNo;
 	private Runnable refresh = new Runnable() {
 		public void run() {
 			int currently_Progress = seek_bar.getProgress() + 100;// 加1秒
@@ -65,6 +109,9 @@ public class PlayerActivity extends Activity {
 		}
 	};
 
+	private List<OnLineAudio> mList;
+	private int currentId;
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -73,33 +120,19 @@ public class PlayerActivity extends Activity {
 			belmotPlayer = BelmotPlayer.getInstance();
 		}
 		setContentView(R.layout.playback_activity);
-
-		lrcView = (LrcView) findViewById(R.id.playback_lyrics);
-		lrcViewNo = (TextView) findViewById(R.id.playback_lyrics_no);
-
-		back_btn = (ImageButton) findViewById(R.id.playback_list);
+		ViewUtils.inject(this);
 		back_btn.setOnTouchListener(back_btn_listener);
 
-		playback_audio_name_tv = (TextView) findViewById(R.id.playback_audio_name);
 		String path[] = belmotPlayer.getPlayerEngine().getPlayingPath()
 				.split("/");
 		if (path.length > 1) {
 			playback_audio_name_tv.setText(path[path.length - 1]);
 		} else {
 			playback_audio_name_tv.setText(path[0]);
+			mList=belmotPlayer.getPlayerEngine().getmListOnLine();
+			currentId=getCurrentId();
 		}
-		playback_mode_btn = (ImageButton) findViewById(R.id.playback_mode);
 		initPlayBackMode();
-		playback_mode_btn.setOnClickListener(new OnClickListener() {
-
-			@Override
-			public void onClick(View v) {
-				OnClickPlayBackMode();
-			}
-		});
-
-		playback_current_time_tv = (TextView) findViewById(R.id.playback_current_time);
-		playback_total_time_tv = (TextView) findViewById(R.id.playback_total_time);
 
 		if (belmotPlayer.getPlayerEngine().getPlayingPath() != ""
 				&& null != belmotPlayer.getPlayerEngine().getPlayingPath()) {
@@ -109,31 +142,28 @@ public class PlayerActivity extends Activity {
 					.getDurationTime());
 		}
 
-		seek_bar = (SeekBar) findViewById(R.id.playback_seeker);
 		seek_bar.setOnSeekBarChangeListener(seekbarListener);
 
-		playback_pre_btn = (ImageButton) findViewById(R.id.playback_pre);
 		playback_pre_btn.setOnClickListener(new OnClickListener() {
 
 			@Override
 			public void onClick(View v) {
-				seek_bar_handler.removeCallbacks(refresh);
-				belmotPlayer.getPlayerEngine().previous();
-				doReSetSong();
+//				seek_bar_handler.removeCallbacks(refresh);
+//				belmotPlayer.getPlayerEngine().previous();
+//				doReSetSong();
+				nextOrPre(TAG_PRE);
 			}
 		});
-		playback_next_btn = (ImageButton) findViewById(R.id.playback_next);
 		playback_next_btn.setOnClickListener(new OnClickListener() {
 
 			@Override
 			public void onClick(View v) {
-				seek_bar_handler.removeCallbacks(refresh);
-				belmotPlayer.getPlayerEngine().next();
-				doReSetSong();
+//				seek_bar_handler.removeCallbacks(refresh);
+//				belmotPlayer.getPlayerEngine().next();
+//				doReSetSong();
+				nextOrPre(TAG_NEXT);
 			}
 		});
-
-		playback_toggle_btn = (ImageButton) findViewById(R.id.playback_toggle);
 
 		playback_toggle_btn.setOnClickListener(new OnClickListener() {
 
@@ -153,14 +183,28 @@ public class PlayerActivity extends Activity {
 			playback_toggle_btn
 					.setBackgroundResource(R.drawable.play_button_default);
 		}
-
+		belmotPlayer.getPlayerEngine().setOnBufferingUpdateListener(this);
+		belmotPlayer.getPlayerEngine().setOnPreparedListener(this);
+		belmotPlayer.getPlayerEngine().setPlaybackMode(PlaybackMode.NORMAL);
 		belmotPlayer.getPlayerEngine().setOnCompletionListener(
 				new OnCompletionListener() {
 					@Override
 					public void onCompletion(MediaPlayer mp) {
-						seek_bar_handler.removeCallbacks(refresh);
-						belmotPlayer.getPlayerEngine().next();
-						doReSetSong();
+//						seek_bar_handler.removeCallbacks(refresh);
+//						if (mList == null) {
+//							belmotPlayer.getPlayerEngine().next();
+//							doReSetSong();
+//						} else {
+//							currentId++;
+//							String hash = mList.get(currentId).getHash();
+//							HttpUtils http = new HttpUtils();
+//							// String string =
+//							// "http://file.qianqian.com/data2/lrc/239104365/239104365.lrc";
+//							String string = OnlineSearchAdapter.UrlByHash
+//									.replace("hash=hash", "hash=" + hash);
+//							http.send(HttpMethod.GET, string, hashCallBack);
+//						}
+						nextOrPre(TAG_NEXT);
 					}
 				});
 
@@ -286,32 +330,8 @@ public class PlayerActivity extends Activity {
 		playback_mode_btn.setBackgroundResource(brid);
 	}
 
-	/**
-	 * 播放歌曲模式的按钮操作
-	 */
-	public void OnClickPlayBackMode() {
-		PlaybackMode mode = belmotPlayer.getPlayerEngine().getPlayMode();
-		PlaybackMode m = PlaybackMode.NORMAL;
-		int brid = R.drawable.playmode_sequence_default;
-		if (mode == PlaybackMode.NORMAL) {
-			m = PlaybackMode.SHUFFLE;
-			brid = R.drawable.playmode_repeate_random_default;
-		} else if (mode == PlaybackMode.SHUFFLE) {
-			m = PlaybackMode.SHUFFLE_AND_REPEAT;
-			brid = R.drawable.playmode_repeate_all_default;
-		} else if (mode == PlaybackMode.SHUFFLE_AND_REPEAT) {
-			m = PlaybackMode.REPEAT;
-			brid = R.drawable.playmode_repeate_single_default;
-		} else if (mode == PlaybackMode.REPEAT) {
-			m = PlaybackMode.NORMAL;
-			brid = R.drawable.playmode_sequence_default;
-		}
-		playback_mode_btn.setBackgroundResource(brid);
-		belmotPlayer.getPlayerEngine().setPlaybackMode(m);
-	}
-
 	private HttpUtils http = new HttpUtils();
-
+	/**歌词RequestCallBAck*/
 	private RequestCallBack<String> callB = new RequestCallBack<String>() {
 
 		@Override
@@ -377,5 +397,111 @@ public class PlayerActivity extends Activity {
 			break;
 		}
 		http.send(HttpMethod.GET, url, callB);
+	}
+	/**获取歌曲链接的RequestCallBack*/
+	private RequestCallBack<String> hashCallBack = new RequestCallBack<String>() {
+
+		@Override
+		public void onSuccess(ResponseInfo<String> arg0) {
+			// TODO Auto-generated method stub
+			// if (dialog.isShowing()) {
+			// dialog.dismiss();
+			// }
+			try {
+				JSONObject jo = new JSONObject(arg0.result);
+				String url = jo.getString("url");
+				String name = jo.getString("fileName");
+				// url =
+				// "http://yinyueshiting.baidu.com/data2/music/c4814a5bfad71d0d15de0b18048fe81a/257859887/74092605248400128.mp3?xcode=e5f780ac9e40153eb50a78e8b32aeef1";
+				play(url);
+				belmotPlayer.getPlayerEngine().setPlayingPath(name);
+				String playlistId2 = mList.get(currentId).getPlaylistId();
+				belmotPlayer.getPlayerEngine().setPlayListId(playlistId2);
+			} catch (JSONException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+
+		@Override
+		public void onFailure(HttpException arg0, String arg1) {
+			// TODO Auto-generated method stub
+			System.out.println();
+		}
+	};
+
+	private void play(String path) {
+		OnLineAudio audio = mList.get(currentId);
+		String playlistId2 = audio.getPlaylistId();
+		if (belmotPlayer.getPlayerEngine().isPlaying()
+				&& belmotPlayer.getPlayerEngine().getPlayListId()
+						.equals(playlistId2)) {
+			belmotPlayer.getPlayerEngine().pause();
+		} else if (belmotPlayer.getPlayerEngine().isPause()
+				&& belmotPlayer.getPlayerEngine().getPlayListId()
+						.equals(playlistId2)) {
+			belmotPlayer.getPlayerEngine().start();
+		} else {
+			if (belmotPlayer.getPlayerEngine().isPlaying()
+					|| belmotPlayer.getPlayerEngine().isPause()) {
+				belmotPlayer.getPlayerEngine().reset();
+			}
+			belmotPlayer.getPlayerEngine().setPlayingPath(path);
+			belmotPlayer.getPlayerEngine().setPlayListId(playlistId2);
+			belmotPlayer.getPlayerEngine().playAsync();
+		}
+
+	}
+	
+	private int getCurrentId(){
+		int current=-1;
+		String playListId = belmotPlayer.getPlayerEngine().getPlayListId();
+		for(int a=0;a<mList.size();a++){
+			if(mList.get(a).getPlaylistId().equals(playListId)){
+				current=a;
+				break;
+			}
+		}
+		return current;
+	}
+
+	@Override
+	public void onBufferingUpdate(MediaPlayer arg0, int arg1) {
+		// TODO Auto-generated method stub
+		if (arg1 != 100) {
+			System.out.println("PlayActivity onBufferingUpdate  arg1=" + arg1);
+			// belmotPlayer.getPlayerEngine().setOnBufferingUpdateListener(null);
+			// belmotPlayer.getPlayerEngine().setOnPreparedListener(null);
+		}
+	}
+
+	@Override
+	public void onPrepared(MediaPlayer arg0) {
+		// TODO Auto-generated method stub
+		arg0.start();
+		System.out.println("PlayActivity开始播放");
+		doReSetSong();
+	}
+	
+	private final int TAG_PRE=1,TAG_NEXT=2;
+	private void nextOrPre(int tag){
+		seek_bar_handler.removeCallbacks(refresh);
+		if (mList == null) {
+			belmotPlayer.getPlayerEngine().next();
+			doReSetSong();
+		} else {
+			if (tag==TAG_NEXT) {
+				currentId=++currentId>mList.size()-1?0:currentId;
+			}else if(tag==TAG_PRE){
+				currentId=--currentId<0?mList.size()-1:currentId;
+			}
+			String hash = mList.get(currentId).getHash();
+			HttpUtils http = new HttpUtils();
+			// String string =
+			// "http://file.qianqian.com/data2/lrc/239104365/239104365.lrc";
+			String string = OnlineSearchAdapter.UrlByHash
+					.replace("hash=hash", "hash=" + hash);
+			http.send(HttpMethod.GET, string, hashCallBack);
+		}
 	}
 }

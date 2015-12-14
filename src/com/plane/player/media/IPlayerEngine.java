@@ -6,6 +6,7 @@ import android.media.MediaPlayer.OnBufferingUpdateListener;
 import android.media.MediaPlayer.OnCompletionListener;
 import android.media.MediaPlayer.OnPreparedListener;
 
+import com.plane.player.domain.OnLineAudio;
 import com.plane.player.media.PlayerEngineImpl.PlaybackMode;
 
 public interface IPlayerEngine {
@@ -35,11 +36,17 @@ public interface IPlayerEngine {
 	boolean isPause();
 
 	String getPlayingPath();
+	String getPlayListId();
 
+	
+	
+	void setPlayListId(String path);
 	void setPlayingPath(String path);
 
 	void setMediaPathList(List<String> pathList);
 
+	List<OnLineAudio> getmListOnLine();
+	void setmListOnLine(List<OnLineAudio> mList);
 	void start();
 
 	void setOnCompletionListener(OnCompletionListener onCompletionListener);

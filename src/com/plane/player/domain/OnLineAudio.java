@@ -2,7 +2,10 @@ package com.plane.player.domain;
 
 import java.math.BigDecimal;
 
-public class OnLineAudio {
+import android.os.Parcel;
+import android.os.Parcelable;
+
+public class OnLineAudio implements Parcelable{
 	private String singername;
 	private String songname;
 	private String filename;
@@ -10,6 +13,8 @@ public class OnLineAudio {
 	private String extname;
 	private int bitrate;
 	private double filesize;
+	private String playlistId;
+	
 	public String getSingername() {
 		return singername;
 	}
@@ -66,6 +71,22 @@ public class OnLineAudio {
 	public void setOwnercount(double ownercount) {
 		this.ownercount = ownercount;
 	}
+	
+	public String getPlaylistId() {
+		return this.hash;
+	}
+	
 	private double timelength;
 	private double ownercount;
+
+	@Override
+	public int describeContents() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+	@Override
+	public void writeToParcel(Parcel dest, int flags) {
+		// TODO Auto-generated method stub
+		
+	}
 }

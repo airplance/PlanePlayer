@@ -157,7 +157,7 @@ public class MusicListAdapter extends BaseAdapter implements
 		holder.index_tv.setText(String.valueOf(position + 1) + ".");
 		holder.name_tv.setText(audioList.get(position).getName());
 		this.setOnClickListener(position, convertView);
-		this.setOnLongClickListener(position, convertView);
+		// this.setOnLongClickListener(position, convertView);
 		this.initPlayerEngineView(position, holder);
 		return convertView;
 	}
@@ -171,17 +171,17 @@ public class MusicListAdapter extends BaseAdapter implements
 
 	private void initPlayerEngineView(final int position, ViewHolder holder) {
 		if (null != belmotPlayer.getPlayerEngine()) {
-			String path = audioList.get(position).getPath();
+			String PlaylistId = audioList.get(position).getPlaylistId();
 			if (belmotPlayer.getPlayerEngine().isPlaying()
-					&& belmotPlayer.getPlayerEngine().getPlayingPath()
-							.equals(path)) {
+					&& belmotPlayer.getPlayerEngine().getPlayListId()
+							.equals(PlaylistId)) {
 				holder.index_tv.setPadding(30, 0, 0, 0);
 				holder.play_btn.setVisibility(ImageButton.VISIBLE);
 				holder.play_btn
 						.setImageResource(R.drawable.list_playing_indicator);
 			} else if (belmotPlayer.getPlayerEngine().isPause()
 					&& belmotPlayer.getPlayerEngine().getPlayingPath()
-							.equals(path)) {
+							.equals(PlaylistId)) {
 
 				holder.index_tv.setPadding(30, 0, 0, 0);
 				holder.play_btn.setVisibility(ImageButton.VISIBLE);
@@ -208,8 +208,7 @@ public class MusicListAdapter extends BaseAdapter implements
 								+ "--Path:"
 								+ ((Audio) getItem(position)).getPath(),
 						Toast.LENGTH_LONG).show();
-				String path = ((Audio) getItem(position)).getPath();
-				play(path);
+				play(position);
 				notifyDataSetChanged();
 			}
 
@@ -264,13 +263,18 @@ public class MusicListAdapter extends BaseAdapter implements
 
 	}
 
-	private void play(String path) {
+	private void play(int position) {
 		initPlayerEngine();
+		Audio audio = audioList.get(position);
+		String path = audio.getPath();
+		String playId = audio.getPlaylistId();
 		if (belmotPlayer.getPlayerEngine().isPlaying()
-				&& belmotPlayer.getPlayerEngine().getPlayingPath().equals(path)) {
+				&& belmotPlayer.getPlayerEngine().getPlayListId()
+						.equals(playId)) {
 			belmotPlayer.getPlayerEngine().pause();
 		} else if (belmotPlayer.getPlayerEngine().isPause()
-				&& belmotPlayer.getPlayerEngine().getPlayingPath().equals(path)) {
+				&& belmotPlayer.getPlayerEngine().getPlayListId()
+						.equals(playId)) {
 			belmotPlayer.getPlayerEngine().start();
 		} else {
 			if (belmotPlayer.getPlayerEngine().isPlaying()
@@ -278,8 +282,9 @@ public class MusicListAdapter extends BaseAdapter implements
 				belmotPlayer.getPlayerEngine().reset();
 			}
 			belmotPlayer.getPlayerEngine().setPlayingPath(path);
-			 belmotPlayer.getPlayerEngine().play();
-//			belmotPlayer.getPlayerEngine().playAsync();
+			belmotPlayer.getPlayerEngine().setPlayListId(playId);
+			belmotPlayer.getPlayerEngine().play();
+			// belmotPlayer.getPlayerEngine().playAsync();
 		}
 
 	}
@@ -318,7 +323,7 @@ public class MusicListAdapter extends BaseAdapter implements
 					public void onClick(DialogInterface dialog, int which) {
 						switch (which) {
 						case 0:
-							play(path);
+							play(position);
 							notifyDataSetChanged();
 							break;
 						case 1:

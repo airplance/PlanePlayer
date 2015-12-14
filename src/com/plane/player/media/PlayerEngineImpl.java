@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Locale;
 
 import com.plane.player.BelmotPlayer;
+import com.plane.player.domain.OnLineAudio;
 
 import android.media.MediaPlayer;
 import android.media.MediaPlayer.OnBufferingUpdateListener;
@@ -50,7 +51,7 @@ public class PlayerEngineImpl implements IPlayerEngine {
 	private List<Integer> playbackOrder = new ArrayList<Integer>();
 
 	private String path = "";
-
+	private String playlistId="";
 	private int selectedOrderIndex = 0;
 
 	private List<String> mediaList = new ArrayList<String>();
@@ -204,6 +205,19 @@ public class PlayerEngineImpl implements IPlayerEngine {
 		this.path = path;
 
 	}
+	
+	
+	@Override
+	public String getPlayListId() {
+		// TODO Auto-generated method stub
+		return this.playlistId;
+	}
+
+	@Override
+	public void setPlayListId(String playlistId) {
+		// TODO Auto-generated method stub
+		this.playlistId=playlistId;
+	}
 
 	@Override
 	public void setMediaPathList(List<String> pathList) {
@@ -286,6 +300,7 @@ public class PlayerEngineImpl implements IPlayerEngine {
 
 		public void playAsync(String path) {
 			try {
+				this.reset();
 				this.setDataSource(path);
 				if (!isPause) {
 					super.prepareAsync();
@@ -378,6 +393,17 @@ public class PlayerEngineImpl implements IPlayerEngine {
 		mediaPlayerEngine
 				.setOnBufferingUpdateListener(OnBufferingUpdateListener);
 
+	}
+
+	private List<OnLineAudio> mListOnLine ;
+	@Override
+	public List<OnLineAudio> getmListOnLine() {
+		return this.mListOnLine;
+	}
+	@Override
+	public void setmListOnLine(List<OnLineAudio> mList) {
+		// TODO Auto-generated method stub
+		this.mListOnLine=mList;
 	}
 
 }

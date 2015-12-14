@@ -192,6 +192,7 @@ public class AudioDaoImpl extends ContextWrapper implements AudioDao,
 						.getColumnIndexOrThrow(MediaStore.Audio.Media.DISPLAY_NAME)));
 				audio.setPath(cursor.getString(cursor
 						.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA)));
+				audio.setPlaylistId(Long.toString(audio.getId().hashCode()));
 				musicList.add(audio);
 			}
 		}
