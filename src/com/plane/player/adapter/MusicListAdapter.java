@@ -259,7 +259,6 @@ public class MusicListAdapter extends BaseAdapter implements
 				});
 		belmotPlayer.getPlayerEngine().setOnBufferingUpdateListener(this);
 		belmotPlayer.getPlayerEngine().setOnPreparedListener(this);
-		belmotPlayer.getPlayerEngine().setPlaybackMode(PlaybackMode.NORMAL);
 
 	}
 

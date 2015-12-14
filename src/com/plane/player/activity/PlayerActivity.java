@@ -185,7 +185,6 @@ OnPreparedListener, OnBufferingUpdateListener {
 		}
 		belmotPlayer.getPlayerEngine().setOnBufferingUpdateListener(this);
 		belmotPlayer.getPlayerEngine().setOnPreparedListener(this);
-		belmotPlayer.getPlayerEngine().setPlaybackMode(PlaybackMode.NORMAL);
 		belmotPlayer.getPlayerEngine().setOnCompletionListener(
 				new OnCompletionListener() {
 					@Override

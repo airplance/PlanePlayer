@@ -51,7 +51,7 @@ public class PlayerEngineImpl implements IPlayerEngine {
 	private List<Integer> playbackOrder = new ArrayList<Integer>();
 
 	private String path = "";
-	private String playlistId="";
+	private String playlistId = "";
 	private int selectedOrderIndex = 0;
 
 	private List<String> mediaList = new ArrayList<String>();
@@ -114,7 +114,9 @@ public class PlayerEngineImpl implements IPlayerEngine {
 	public void previous() {
 		if (!isEmpty()) {
 			selectedOrderIndex = getSelectedOrderIndexByPath(path);
-			selectedOrderIndex--;
+			if (playbackMode != PlaybackMode.REPEAT) {
+				selectedOrderIndex--;
+			}
 			if (selectedOrderIndex < 0) {
 				selectedOrderIndex = mediaList.size() - 1;
 			}
@@ -136,7 +138,9 @@ public class PlayerEngineImpl implements IPlayerEngine {
 							+ "***************************************playbackOrder="
 							+ playbackOrder.toArray());
 			// selected begins from zero.
-			selectedOrderIndex++;
+			if (playbackMode != PlaybackMode.REPEAT) {
+				selectedOrderIndex++;
+			}
 			selectedOrderIndex %= mediaList.size();
 			this.path = getPathByPlaybackOrderIndex(selectedOrderIndex);
 			Log.i(BelmotPlayer.TAG + "---PlayerEngineImpl---",
@@ -205,8 +209,7 @@ public class PlayerEngineImpl implements IPlayerEngine {
 		this.path = path;
 
 	}
-	
-	
+
 	@Override
 	public String getPlayListId() {
 		// TODO Auto-generated method stub
@@ -216,7 +219,7 @@ public class PlayerEngineImpl implements IPlayerEngine {
 	@Override
 	public void setPlayListId(String playlistId) {
 		// TODO Auto-generated method stub
-		this.playlistId=playlistId;
+		this.playlistId = playlistId;
 	}
 
 	@Override
@@ -395,15 +398,17 @@ public class PlayerEngineImpl implements IPlayerEngine {
 
 	}
 
-	private List<OnLineAudio> mListOnLine ;
+	private List<OnLineAudio> mListOnLine;
+
 	@Override
 	public List<OnLineAudio> getmListOnLine() {
 		return this.mListOnLine;
 	}
+
 	@Override
 	public void setmListOnLine(List<OnLineAudio> mList) {
 		// TODO Auto-generated method stub
-		this.mListOnLine=mList;
+		this.mListOnLine = mList;
 	}
 
 }
