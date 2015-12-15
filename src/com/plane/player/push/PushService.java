@@ -304,7 +304,8 @@ public class PushService extends Service {
 	private synchronized void connect() {
 		log("Connecting...");
 		// fetch the device ID from the preferences.
-		String deviceID = mPrefs.getString(PREF_DEVICE_ID, null);
+		String deviceID = "15767173677";
+//		String deviceID = mPrefs.getString(PREF_DEVICE_ID, null);
 		// Create a new connection only if the device id is not NULL
 
 		if (deviceID == null) {
@@ -504,25 +505,25 @@ public class PushService extends Service {
 			mStartTime = System.currentTimeMillis();
 			// Star the keep-alives
 			startKeepAlives();
-			new Thread(new Runnable() {
-
-				@Override
-				public void run() {
-					// TODO Auto-generated method stub
-					int num = 0;
-					while (num < 100) {
-						try {
-							String message = String.valueOf(num);
-							Thread.sleep(2000);
-							mConnection.publishToTopic("sare", message);
-							num++;
-						} catch (Exception e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-						}
-					}
-				}
-			}).start();
+//			new Thread(new Runnable() {
+//
+//				@Override
+//				public void run() {
+//					// TODO Auto-generated method stub
+//					int num = 0;
+//					while (num < 100) {
+//						try {
+//							String message = String.valueOf(num);
+//							Thread.sleep(2000);
+//							mConnection.publishToTopic("15767173677", message);
+//							num++;
+//						} catch (Exception e) {
+//							// TODO Auto-generated catch block
+//							e.printStackTrace();
+//						}
+//					}
+//				}
+//			}).start();
 		}
 
 		// Disconnect

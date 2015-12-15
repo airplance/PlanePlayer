@@ -2,6 +2,7 @@ package com.plane.player;
 
 import com.plane.player.media.IPlayerEngine;
 import com.plane.player.media.PlayerEngineImpl;
+import com.plane.player.push.PushService;
 
 import android.app.Application;
 import android.content.pm.PackageInfo;
@@ -26,6 +27,7 @@ public class BelmotPlayer extends Application {
 	public void onCreate() {
 		instance = this;
 		super.onCreate();
+		PushService.actionStart(this);
 	}
 
 	public static BelmotPlayer getInstance() {

@@ -28,7 +28,10 @@ import com.plane.player.adapter.OnlineSearchAdapter;
 import com.plane.player.dao.JRequestCallBack;
 import com.plane.player.dao.impl.AudioDaoImpl;
 import com.plane.player.domain.OnLineAudio;
+import com.plane.player.utils.ConnecUtil;
 import com.plane.player.utils.Constants.PopupMenu;
+
+import cxh.voctex.utils.ToastUtil;
 
 public class SearchMusicActivity extends BaseListActivity {
 	private AudioDaoImpl audioDao = new AudioDaoImpl(this);
@@ -58,6 +61,10 @@ public class SearchMusicActivity extends BaseListActivity {
 		search_btn.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
+				if(ConnecUtil.isWifiConnected(getBaseContext())){
+					ToastUtil.showS(getBaseContext(), "此功能wifi状态下使用");
+					return;
+				}
 				DoDefault();
 				Gkey = autoCompleteTextView.getText().toString().trim();
 				if ("".equals(Gkey)) {

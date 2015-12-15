@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.content.DialogInterface.OnClickListener;
 
 import com.plane.player.R;
+import com.plane.player.push.PushService;
 import com.plane.player.utils.ImageScale;
 
 public class ExitDialog extends CommonAlertDialogBuilder {
@@ -32,6 +33,7 @@ public class ExitDialog extends CommonAlertDialogBuilder {
 				new OnClickListener() {
 					@Override
 					public void onClick(DialogInterface dialog, int which) {
+						PushService.actionStop(context.getApplicationContext());
 						dialog.dismiss();
 						android.os.Process.killProcess(android.os.Process
 								.myPid());
